@@ -26,6 +26,7 @@ import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JLabel;
+import javax.swing.ScrollPaneConstants;
 
 /**
  * Purpose	:This class is used to construct a GUI for server to show message traffic and chat pairs
@@ -38,6 +39,7 @@ public class goChatServerGUI {
 
 	private JFrame frame;
 	public static JList chatPairList = new JList();
+	public static JTextArea threadMonitorList = new JTextArea();
 	public static JTextArea conversationTextArea = new JTextArea();
 
 	/**
@@ -105,15 +107,26 @@ public class goChatServerGUI {
 		frame.getContentPane().add(lblChatMessages);
 		
 		JLabel lblChatPairs = new JLabel("Chat Pairs");
-		lblChatPairs.setBounds(541, 30, 66, 14);
+		lblChatPairs.setBounds(502, 30, 66, 14);
 		frame.getContentPane().add(lblChatPairs);
 		
 		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(423, 71, 232, 372);
+		scrollPane.setBounds(423, 71, 232, 168);
 		scrollPane.setViewportView(chatPairList);
 		scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		frame.getContentPane().add(scrollPane);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		scrollPane_1.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane_1.setViewportView(threadMonitorList);
+		scrollPane_1.setBounds(423, 266, 232, 177);
+		frame.getContentPane().add(scrollPane_1);
+		
+		JLabel lblThreadMonitor = new JLabel("Thread monitor (Thread id : Username)");
+		lblThreadMonitor.setBounds(433, 241, 232, 14);
+		frame.getContentPane().add(lblThreadMonitor);
 		
 	}
 }

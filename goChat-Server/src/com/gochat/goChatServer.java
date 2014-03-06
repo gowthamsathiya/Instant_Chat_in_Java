@@ -49,6 +49,7 @@ public class goChatServer {
 	public static Map<String,Socket> connectedUserandSocket = new HashMap<String,Socket>();
 	public static Map<String,String> connectedPair = new HashMap<String,String>();
 	public static goChatServerGUI serverGUI;
+	private static String username;
 	
 	/**
 	 * Purpose	:	Starts when program is instantiated and keep listening the port for incoming connection. If any, establish connection and process them in a separate thread by calling goChatServerThread class instance.
@@ -75,6 +76,7 @@ public class goChatServer {
 				goChatServerThread chat = new goChatServerThread(Sock);
 				Thread t = new Thread(chat);
 				t.start();
+				goChatServerGUI.threadMonitorList.append(t.getId()+" : "+username.substring(1)+"\n");
 			}
 		}catch(Exception e){
 			e.printStackTrace();
@@ -92,7 +94,7 @@ public class goChatServer {
 	 */
 	public static void addUser(Socket Sock) throws IOException{
 		Scanner input = new Scanner(Sock.getInputStream());
-		String username = input.nextLine();
+		username = input.nextLine();
 		if(username.charAt(0)=='1')
 			visibleUsers.add(username.substring(1));
 		connectedUsers.add(username.substring(1));
