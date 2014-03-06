@@ -1,3 +1,30 @@
+/**
+ * File Name				: goChatServerThread.java
+ * 
+ * Author					: Gowtham Sathiyanarayanan
+ * 
+ * UTA ID					: 1000991932
+ * 
+ * Subject					: Distributed System
+ * 
+ * Input					: goChatServer class instantiate instance of this class which implements runnable to run as a thread
+ * 	
+ * Supported requirements	: java to be installed
+ * 
+ * Class Name				: goChatServerThread
+ * 
+ * Functional description	: Once connection between client and server is established using goChatServer class, this class monitor for and service request from client like,
+ * 							  connecting to a user, send chat message, disconnect, logout from chat, send visible user list to client and respond to them by implementing Runnable interface
+ * 
+ * Design implementation	: RPC message format various services they implement are as follows
+ * 								DIS#$ - Request to disconnect the chat pair
+ * 								REC#$ - Connect to particular recipient
+ * 								ERR#$ - Error in connection
+ * 								SCX#$ - Successfully connected
+ * 								VIS#$ - Visible user list
+ * 								RON#$ - Recipient disconnected 
+ */
+
 package com.gochat;
 
 import java.io.IOException;
@@ -6,11 +33,18 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.Scanner;
 
+/**
+ * Class Name : goChatServerThread
+ * 
+ * @author Gowtham Sathiyanarayanan
+ * @version Original
+ */
 public class goChatServerThread implements Runnable {
 	Socket ClientSocket;
 	private Scanner In;
 	private PrintWriter Out;
 	private String clientMessage;
+	private String[] arrayPairs;
 	
 	public goChatServerThread(Socket sock) {
 		this.ClientSocket = sock;
@@ -31,8 +65,6 @@ public class goChatServerThread implements Runnable {
 				
 				clientMessage = In.nextLine();
 				
-				System.out.println(clientMessage);
-				
 				if(clientMessage.substring(0, 5).contains("REC#$")){
 					String clientName = clientMessage.split(" > ")[1];
 					String recepientName = clientMessage.split(" > ")[2];
@@ -44,6 +76,11 @@ public class goChatServerThread implements Runnable {
 						else{
 							goChatServer.connectedPair.put(clientName, recepientName);
 							goChatServer.connectedPair.put(recepientName, clientName);
+							goChatServer.connectedListPair.add(clientName+" < > "+recepientName);
+							
+							goChatServer.serverGUI.conversationTextArea.append(clientName+" < > "+recepientName+" got connected \n");
+							arrayPairs = goChatServer.connectedListPair.toArray(new String[goChatServer.connectedListPair.size()]);
+							goChatServer.serverGUI.chatPairList.setListData(arrayPairs);
 							
 							Out.println("SCX#$");
 							Out.flush();
@@ -74,14 +111,35 @@ public class goChatServerThread implements Runnable {
 					Out.flush();
 					goChatServer.connectedPair.remove(senderName);
 					goChatServer.connectedPair.remove(recepientName);
+					if(goChatServer.connectedListPair.contains(senderName+" < > "+recepientName)){
+						goChatServer.connectedListPair.remove(senderName+" < > "+recepientName);
+						goChatServer.serverGUI.conversationTextArea.append(senderName+" < > "+recepientName+" got disconnected");
+						
+					}
+					else if(goChatServer.connectedListPair.contains(recepientName+" < > "+senderName)){
+						goChatServer.connectedListPair.remove(recepientName+" < > "+senderName);
+						goChatServer.serverGUI.conversationTextArea.append(recepientName+" < > "+senderName+" got disconnected");
+					}
+					arrayPairs = goChatServer.connectedListPair.toArray(new String[goChatServer.connectedListPair.size()]);
+					goChatServer.serverGUI.chatPairList.setListData(arrayPairs);
 				}
 				else {
-					String senderName = clientMessage.split(" > ")[0];
+					String[] splitMessage = clientMessage.split(" > ");
+					String senderName = splitMessage[0];
 					Socket recepientSocket = getRecepientSocket(senderName);
 					if(recepientSocket!=null){
-						PrintWriter Out = new PrintWriter(recepientSocket.getOutputStream());
-						Out.println(clientMessage);
-						Out.flush();
+						try{
+							PrintWriter Out = new PrintWriter(recepientSocket.getOutputStream());
+							Out.println(senderName+" > "+splitMessage[2]);
+							Out.flush();
+							String header[] = splitMessage[1].split("##");
+							for(String h:header)
+								goChatServer.serverGUI.conversationTextArea.append(h+"\n");
+							goChatServer.serverGUI.conversationTextArea.append("Data : "+splitMessage[2]+"\n\n");
+						}catch(Exception e){
+							Out.println("Recepient can no longer receive your chat");
+							Out.flush();
+						}
 					}
 					else{
 						Out.println("Recepient can no longer receive your chat");
@@ -99,6 +157,12 @@ public class goChatServerThread implements Runnable {
 		}
 	}
 	
+	/**
+	 * Method Name	:	getRecepientSocket
+	 * Purpose		:	return the get corresponding recipient socket
+	 * @param senderName
+	 * @return
+	 */
 	private Socket getRecepientSocket(String senderName){
 		Socket recepientSocket = null;
 		if(goChatServer.connectedPair.containsKey(senderName)){
@@ -108,6 +172,12 @@ public class goChatServerThread implements Runnable {
 		return recepientSocket;
 	}
 
+	/**
+	 * Method Name	:	CheckConnection
+	 * Purpose		:	To check for connection of client. If client got disconnected, remove from connectedUserList and ConnectedPairs
+	 * 
+	 * @throws IOException
+	 */
 	private void CheckConnection() throws IOException {
 		if(!ClientSocket.isConnected()){
 			String username = null;
@@ -121,6 +191,7 @@ public class goChatServerThread implements Runnable {
 				if(user.getValue() == ClientSocket){
 					username = user.getKey();
 					notifyDisconnect(username);
+					goChatServer.serverGUI.conversationTextArea.append(username+" disconnected \n");
 				}
 			}
 			
@@ -131,11 +202,27 @@ public class goChatServerThread implements Runnable {
 				Out.println("VIS#$"+goChatServer.visibleUsers);
 				Out.flush();
 			}
+			
+			for(String pair:goChatServer.connectedListPair){
+				if(pair.contains(username)){
+					goChatServer.connectedListPair.remove(pair);
+					break;
+				}
+			}
+			arrayPairs = goChatServer.connectedListPair.toArray(new String[goChatServer.connectedListPair.size()]);
+			goChatServer.serverGUI.chatPairList.setListData(arrayPairs);			
+			
 		}
 		
 		
 	}
 	
+	/**
+	 * Method name	:	notifyDisconnect
+	 * Purpose		:	notify to recipient and to other users when client got disconnected
+	 * @param username
+	 * @throws IOException
+	 */
 	private void notifyDisconnect(String username) throws IOException{
 		String recepientName = null;
 		for(Map.Entry<String, String> recepient : goChatServer.connectedPair.entrySet()){
