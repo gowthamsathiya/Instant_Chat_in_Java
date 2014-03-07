@@ -65,52 +65,55 @@ public class goChatServerThread implements Runnable {
 				
 				clientMessage = In.nextLine();
 				
-				if(clientMessage.substring(0, 5).contains("REC#$")){
+				if(clientMessage.substring(0, 5).contains("REC#$")){ //check for REC#$ - Request to Connect to the particular recipient
 					String clientName = clientMessage.split(" > ")[1];
 					String recepientName = clientMessage.split(" > ")[2];
 					if(goChatServer.connectedUsers.contains(recepientName)){
 						if(goChatServer.connectedPair.containsKey(recepientName)){
-							Out.println("ERR#$ > Recepient is busy");
+							Out.println("ERR#$ > Recepient is busy"); //send ERR#$ - Error in connection if recipient is chatting with others
 							Out.flush();
 						}
 						else{
-							goChatServer.connectedPair.put(clientName, recepientName);
+							goChatServer.connectedPair.put(clientName, recepientName); //add user and his recipient to connectedPair list
 							goChatServer.connectedPair.put(recepientName, clientName);
-							goChatServer.connectedListPair.add(clientName+" < > "+recepientName);
+							goChatServer.connectedListPair.add(clientName+" < > "+recepientName); //add user and his recipient to connecteListPair to show in server GUI
 							
 							goChatServer.serverGUI.conversationTextArea.append(clientName+" < > "+recepientName+" got connected \n");
 							arrayPairs = goChatServer.connectedListPair.toArray(new String[goChatServer.connectedListPair.size()]);
-							goChatServer.serverGUI.chatPairList.setListData(arrayPairs);
+							goChatServer.serverGUI.chatPairList.setListData(arrayPairs); //show connectedListPair in GUI
 							
-							Out.println("SCX#$");
+							Out.println("SCX#$"); //send SCX#$ - connected successfully message to client
 							Out.flush();
 							Out.println("Connected to "+recepientName);
 							Out.flush();
 							
 							PrintWriter ROut = new PrintWriter(getRecepientSocket(clientName).getOutputStream());
-							ROut.println("SCX#$");
+							ROut.println("SCX#$");//send SCX#$ - connected successfully message to recipient
 							ROut.flush();
 							ROut.println("Connected to "+clientName);
 							ROut.flush();
 						}
 					}
 					else{
-						Out.println("ERR#$ > No such recepient found");
+						Out.println("ERR#$ > No such recepient found");//send ERR#$ - when no such recipient found
 						Out.flush();
 					}
 				}
-				else if(clientMessage.substring(0, 5).contains("DIS#$")){
+				else if(clientMessage.substring(0, 5).contains("DIS#$")){ //check for DIS#$ - Request to disconnect the chat pair
 					String senderName = clientMessage.split(" > ")[1];
 					String recepientName = goChatServer.connectedPair.get(senderName);
 					Socket recepientSocket = goChatServer.connectedUserandSocket.get(recepientName);
 					//Socket recepientSocket = getRecepientSocket(senderName);
 					PrintWriter ROut = new PrintWriter(recepientSocket.getOutputStream());
-					ROut.println("RON#$");
+					ROut.println("RON#$"); //send RON#$ - Recipient disconnected
 					ROut.flush();
-					Out.println("RON#$");
+					Out.println("RON#$"); //send RON#$ - Recipient disconnected
 					Out.flush();
-					goChatServer.connectedPair.remove(senderName);
+					goChatServer.connectedPair.remove(senderName); //remove from connectedPair list
 					goChatServer.connectedPair.remove(recepientName);
+					/**
+					 * remove from connectedListPair list and notify in GUI
+					 */
 					if(goChatServer.connectedListPair.contains(senderName+" < > "+recepientName)){
 						goChatServer.connectedListPair.remove(senderName+" < > "+recepientName);
 						goChatServer.serverGUI.conversationTextArea.append(senderName+" < > "+recepientName+" got disconnected");
@@ -124,7 +127,7 @@ public class goChatServerThread implements Runnable {
 					goChatServer.serverGUI.chatPairList.setListData(arrayPairs);
 				}
 				else {
-					String[] splitMessage = clientMessage.split(" > ");
+					String[] splitMessage = clientMessage.split(" > "); //split sender name and chat message
 					String senderName = splitMessage[0];
 					Socket recepientSocket = getRecepientSocket(senderName);
 					if(recepientSocket!=null){
@@ -133,16 +136,19 @@ public class goChatServerThread implements Runnable {
 							Out.println(senderName+" > "+splitMessage[2]);
 							Out.flush();
 							String header[] = splitMessage[1].split("##");
+							/**
+							 * show HTTP header in server GUI
+							 */
 							for(String h:header)
 								goChatServer.serverGUI.conversationTextArea.append(h+"\n");
 							goChatServer.serverGUI.conversationTextArea.append("Data : "+splitMessage[2]+"\n\n");
 						}catch(Exception e){
-							Out.println("Recepient can no longer receive your chat");
+							Out.println("Recepient can no longer receive your chat"); //send when recipient disconnected
 							Out.flush();
 						}
 					}
 					else{
-						Out.println("Recepient can no longer receive your chat");
+						Out.println("Recepient can no longer receive your chat"); //send when recipient disconnected
 						Out.flush();
 					}
 				}

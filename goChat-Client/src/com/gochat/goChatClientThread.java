@@ -47,7 +47,7 @@ public class goChatClientThread implements Runnable{
 	Socket ClientSocket;
 	Scanner In;
 	PrintWriter Out;
-	DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+	DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss"); //date format for chat message
 
 	/**
 	 * Purpose : Create instance of class
@@ -83,22 +83,22 @@ public class goChatClientThread implements Runnable{
 			if(In.hasNext()){
 				String chatMessage = In.nextLine();
 				
-				if(chatMessage.contains("VIS#$")){
-					String[] visibleUsers = chatMessage.substring(5).replace("[", "").replace("]", "").split(", ");
+				if(chatMessage.contains("VIS#$")){ //check for VIS#$ - Visible user list from server
+					String[] visibleUsers = chatMessage.substring(5).replace("[", "").replace("]", "").split(", ");//convert to arraylist of users
 					goChatClient.visibleUserList.setListData(visibleUsers);
 				}
-				else if(chatMessage.contains("SCX#$")){
+				else if(chatMessage.contains("SCX#$")){ //check for SCX#$ - Successfully connected from server on connection request
 					goChatClient.configurationAfterConnect();
 				}
-				else if(chatMessage.contains("ERR#$")){
+				else if(chatMessage.contains("ERR#$")){ // check for ERR#$ - Error message from server
 					goChatClient.connectionErrorPrompt(chatMessage.split(" > ")[1]);
 				}
-				else if(chatMessage.contains("RON#$")){
+				else if(chatMessage.contains("RON#$")){ //check for RON#$ - Recipient disconnected fork from server
 					goChatClient.conversationTextArea.append("Recepient disconected \n");
-					goChatClient.initConfiguration();
+					goChatClient.initConfiguration(); //chat chat window to initial configuration when recipient disconnected
 				}
 				else{
-					Date now = new Date();
+					Date now = new Date(); //to get the message time
 					goChatClient.conversationTextArea.append(dateFormat.format(now)+":  "+chatMessage+"\n");
 				}
 			}
@@ -110,7 +110,7 @@ public class goChatClientThread implements Runnable{
 	 * @param message
 	 */
 	public void sendMessage(String message){
-		Out.println(goChatClient.username+" > "+message);
+		Out.println(goChatClient.username+" > "+message); //append user name and send message
 		Out.flush();
 	}
 
@@ -119,7 +119,7 @@ public class goChatClientThread implements Runnable{
 	 * @throws IOException
 	 */
 	public void logOff() throws IOException{
-		Out.println(goChatClient.username+" > has disconnected");
+		Out.println(goChatClient.username+" > has disconnected"); //append user name and disconnect messsage
 		Out.flush();
 		ClientSocket.close();
 	}
@@ -129,7 +129,7 @@ public class goChatClientThread implements Runnable{
 	 * @throws IOException
 	 */
 	public void disconnect() throws IOException{
-		Out.println("DIS#$ > "+goChatClient.username);
+		Out.println("DIS#$ > "+goChatClient.username); //send DIS#$ - Request to disconnect the chat pair
 		Out.flush();
 	}
 		

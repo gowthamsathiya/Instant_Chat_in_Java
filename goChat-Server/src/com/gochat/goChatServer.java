@@ -59,24 +59,24 @@ public class goChatServer {
 	 */
 	public static void main(String args[]) throws IOException{
 		try{
-			final int Port = 80;
-			ServerSocket Server = new ServerSocket(Port);
+			final int Port = 80; //port to run server
+			ServerSocket Server = new ServerSocket(Port); //open server socket connection
 			System.out.println("Connection open. Waiting for client");
-			serverGUI = new goChatServerGUI();
-			serverGUI.runGUI();
+			serverGUI = new goChatServerGUI(); //Create the server GUI instance
+			serverGUI.runGUI(); //Run the server GUI
 			
-			while(true){
-				Socket Sock = Server.accept();
-				connectedSockets.add(Sock);
+			while(true){ //to keep listening
+				Socket Sock = Server.accept(); //accept the incoming socket
+				connectedSockets.add(Sock); //add to socket list
 				
 				System.out.println("Client connected from :"+Sock.getLocalAddress().getHostName()+"-"+Sock.getLocalSocketAddress());
 				
-				addUser(Sock);
+				addUser(Sock); //call addUser function to add the user to the list
 				
-				goChatServerThread chat = new goChatServerThread(Sock);
-				Thread t = new Thread(chat);
-				t.start();
-				goChatServerGUI.threadMonitorList.append(t.getId()+" : "+username.substring(1)+"\n");
+				goChatServerThread chat = new goChatServerThread(Sock); //allocate separate thread for each user
+				Thread t = new Thread(chat); //instantiate allocated thread for each user
+				t.start(); //start the thread
+				goChatServerGUI.threadMonitorList.append(t.getId()+" : "+username.substring(1)+"\n"); //add thread id and user to monitor list in GUI
 			}
 		}catch(Exception e){
 			e.printStackTrace();
@@ -93,18 +93,20 @@ public class goChatServer {
 	 * @throws IOException
 	 */
 	public static void addUser(Socket Sock) throws IOException{
-		Scanner input = new Scanner(Sock.getInputStream());
+		Scanner input = new Scanner(Sock.getInputStream()); //to get input message from client socket
 		username = input.nextLine();
-		if(username.charAt(0)=='1')
-			visibleUsers.add(username.substring(1));
-		connectedUsers.add(username.substring(1));
-		connectedUserandSocket.put(username.substring(1), Sock);
-		
+		if(username.charAt(0)=='1') //to check the visibility set. 1-Visible 0-InVisible
+			visibleUsers.add(username.substring(1)); //add username to visibleUser list
+		connectedUsers.add(username.substring(1)); //add to connectedUsers list which contains all user logged in
+		connectedUserandSocket.put(username.substring(1), Sock);//Map the user with their socket
+		/**
+		 * indicate the visibility of user to all the other users
+		 */
 		for(int i=0; i<connectedUsers.size();i++){
-			Socket userSocket = (Socket) connectedSockets.get(i);
+			Socket userSocket = (Socket) connectedSockets.get(i); //get all socket one by one
 			PrintWriter Out = new PrintWriter(userSocket.getOutputStream());
-			Out.println("VIS#$"+visibleUsers);
-			Out.flush();
+			Out.println("VIS#$"+visibleUsers);//show the user as visible sending updated visibleUsers list
+			Out.flush();//flush the socket stream
 		}
 	}
 	
